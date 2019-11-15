@@ -7,7 +7,7 @@ comment "/*" "*/";
 
 Tbool.		Type ::= "bool";
 Tdouble.	Type ::= "double";
-Tint.		Type ::= "init";
+Tint.		Type ::= "int";
 Tvoid.		Type ::= "void";
 
 token Id (letter (letter | digit | '_')* );
