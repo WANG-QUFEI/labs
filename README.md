@@ -1,1 +1,1 @@
-# laboratory assignments for all courses at Chalmers
+# laboratory assignments for courses at Chalmers
