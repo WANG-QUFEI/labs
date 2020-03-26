@@ -1,0 +1,120 @@
+\documentclass[10pt]{article}
+\newcommand{\RomanNumeralCaps}[1]
+    {\MakeUppercase{\romannumeral #1}}
+\usepackage{listings, xcolor,hyperref,amsmath}
+\setlength{\parskip}{1em}
+\title{TDA342\\ Security - Part \RomanNumeralCaps 1}
+\author{QUFEI WANG \\ JACOB J. NILSSON}
+
+\lstset{
+breaklines=true,
+frame=shadowbox,
+language=Haskell
+}
+
+\begin{document}
+\maketitle
+\section*{Task 1}
+The definition of data type $Sensitivity$ as a monoid is as follows:
+\begin{lstlisting}
+data Sensitivity = Secret | Public deriving (Show, Eq)
+
+instance Monoid Sensitivity where
+  mempty = Public
+  mappend Public Public = Public
+  mappend _ _ = Secret
+
+instance Semigroup Sensitivity where
+  (<>) = mappend
+\end{lstlisting}
+From this definition we have the following two premises:
+\begin{enumerate}
+\item $mempty = Public$
+\item Only $Public$ $`mappend`$ $Public$ yields $Public$, in all other situations we have $Secret$ as the reuslt of $mappend$ operation.
+\end{enumerate}
+From these two premises, we have the following 4 conclustions.
+\begin{enumerate}
+\item $mappend\; mempty\; a == a$.
+
+\textit{Proof.} From premise $2$ we have,
+\begin{align} 
+mappend\; Public\; Public = Public \\ 
+mappend\; Public\; Secret = Secret
+\end{align}
+From premise $1$, we have
+\begin{align} 
+Public = mempty
+\end{align}
+Substitute $Public$ in $(1),(2)$ with $mempty$, we have
+\begin{align} 
+mappend\; mempty\; Public = Public \\ 
+mappend\; mempty\; Secret = Secret
+\end{align}
+Then we conclude that $mappend\; mempty\; a == a$.
+
+\item $mappend\; a\; mempty == a$.
+
+\textit{Proof.} Similar with the proof above, just replace formula (2) with
+$$mappend\; Secret\; Public = Secret$$, and apply the same logic to the rest.
+
+\item $mappend\; a\; (mappend\; b\; c) == mappend\; (mappend\; a\; b)\; c$.
+
+\textit{Proof.} Assume $a = mempty$, by the first conclusion, we have
+\begin{align}
+mappend\; a\; (mappend\; b\; c) = mappend\; b\; c \\
+mappend\; (mappend\; a\; b)\; c = mappend\; b\; c
+\end{align}, such that
+\begin{multline}
+a = mempty \implies \\ mappend\; a\; (mappend\; b\; c) == mappend\; (mappend\; a\; b)\; c
+\end{multline}. Similarly, by assuming $b = mempty$ and $c = mempty$, using the first two conclusions we already proved, we have
+\begin{multline}
+b = mempty \implies \\ mappend\; a\; (mappend\; b\; c) == mappend\; (mappend\; a\; b)\; c
+\end{multline}
+\begin{multline}
+c = mempty \implies \\ mappend\; a\; (mappend\; b\; c) == mappend\; (mappend\; a\; b)\; c
+\end{multline}
+Combining $(8),(9),(10)$, we know that the equation holds if any of $a, b, c$ is $mempty$. On the other hand, if all of $a, b, c$ are $Secret$, then by premise $(2)$, we have both left and right hand side of the equation is $Secret$. So the equation is proven.
+
+\item $mappend\; a\; b == Public \iff (a == Public\; \&\&\; b == Public)$. This is a direct conclusion of premise (2).
+\end{enumerate}
+By the 4 conclusions we've proven above, we know that the data type $Sensitivity$ is a monoid.
+
+\section*{Task 2}
+The modifications made to achieve the desired effect on file $Basic.hs$ is listed as follows:
+\begin{lstlisting}
+data Expr = Lit Integer
+		...
+          | Sec Expr
+  deriving (Show)
+
+type Env = Map Name (Labeled Value)
+
+lookupVar :: Name -> Eval (Labeled Value)
+
+language = P.Lang
+  { ...
+  , P.lNewSecretexp = Sec
+  , ...
+  }
+  
+eval :: Expr -> Eval (Labeled Value)
+eval (Lit n)       = return (LV Public n)
+eval (a :+: b)     = do
+  LV s1 v1 <- eval a
+  LV s2 v2 <- eval b
+  return $ LV (s1 `mappend` s2) (v1 + v2)
+eval (Var x)       = lookupVar x
+eval (Let n e1 e2) = do v <- eval e1
+                        localScope n v (eval e2)
+eval (Sec e)       = do LV _ v <- eval e
+                        return $ LV Secret v
+\end{lstlisting}
+\begin{enumerate}
+\item We add a value constructor $Sec\; Expr$ in type $Expr$ to incorporate the 'secret' keyword.
+\item We changed the type of $Env$ to $Map\; Name\; (Labeled\; Value)$, since we need to track the sensitivity level of our expression.
+\item As a consequence of 2, we also need to change the signature of function $lookupVar$. However the implementation of this function doesn't need to change since the definition of $Eval$ remains the same.
+\item We modified the value of $P.lNewSecretexp$ in $language$ to $Sec$ to guarantee the parser works correctly.
+\item Finally, we changed the signature of function $eval$ and altered parts of the implementation to have the final result being 'labeled'. Notice that we properly used the function $mappend$ to make the semantics  of sensitivity consistent.
+\end{enumerate}
+A testing function named $testLabeledValue$ is added to the source file to verify the correctness of our implementation. 
+\end{document}

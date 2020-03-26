@@ -1,0 +1,75 @@
+PDefs.	Program ::= [Def];
+terminator Def "";
+
+comment "//";
+comment "#";
+comment "/*" "*/";
+
+Tbool.		Type ::= "bool";
+Tdouble.	Type ::= "double";
+Tint.		Type ::= "int";
+Tvoid.		Type ::= "void";
+
+token Id (letter (letter | digit | '_')* );
+
+ADecl.	Arg ::= Type Id;
+
+DFun.	Def ::= Type Id "(" [Arg] ")" "{" [Stm] "}";
+separator Arg ",";
+terminator Stm "";
+
+SExp.	Stm ::= Exp ";";
+SDecl.	Stm ::= Type [Id] ";";
+SInit.	Stm ::= Type Id "=" Exp ";";
+
+separator nonempty Id ",";
+
+SReturn.	Stm ::= "return" Exp ";";
+SWhile.		Stm ::= "while" "(" Exp ")" Stm;
+SBlock.		Stm ::= "{" [Stm] "}" ;
+SIfElse.	Stm ::= "if" "(" Exp ")" Stm "else" Stm;
+
+EInt.		Exp6 ::= Integer;
+EDouble.	Exp6 ::= Double;
+ETrue.		Exp6 ::= "true";
+EFalse.		Exp6 ::= "false";
+EId.		Exp6 ::= Id;
+
+EApp.		Exp6 ::= Id "(" [Exp] ")" ;
+EPIncr.		Exp6 ::= Id "++";
+EPDecr.		Exp6 ::= Id "--";
+EIncr.		Exp6 ::= "++" Id;
+EDecr.		Exp6 ::= "--" Id;
+
+ETimes.		Exp5 ::= Exp5 "*" Exp6;
+EDiv.		Exp5 ::= Exp5 "/" Exp6;
+EPlus.		Exp4 ::= Exp4 "+" Exp5;
+EMinus.		Exp4 ::= Exp4 "-" Exp5;
+ELt.		Exp3 ::= Exp4 "<" Exp4;
+EGt.		Exp3 ::= Exp4 ">" Exp4;
+ELtEq.		Exp3 ::= Exp4 "<=" Exp4;
+EGtEq.		Exp3 ::= Exp4 ">=" Exp4;
+EEq.		Exp3 ::= Exp4 "==" Exp4;
+ENEq.		Exp3 ::= Exp4 "!=" Exp4;
+EAnd.		Exp2 ::= Exp2 "&&" Exp3;
+EOr.		Exp1 ::= Exp1 "||" Exp2;
+EAss.		Exp  ::= Id "=" Exp;
+
+internal EConv.      Exp  ::= Type "(" Exp ")";
+internal ETyped. Exp ::= "[" Exp ":" Type "]";
+
+
+separator 	Exp ",";
+coercions	Exp 6;
+
+internal VInteger.	Val ::= Integer;
+internal VDouble.	Val ::= Double;
+internal VString.		Val ::= String;
+internal VVoid.			Val ::= ;
+internal VUndefined. Val ::= ;
+
+
+
+
+
+
